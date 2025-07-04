@@ -72,44 +72,7 @@ info_list NAIExtractor::ExtractNAI(const std::wstring& imagePath) {
         }
 
         // lsb_bytesからNovelAI仕様でJSONを抽出
-        if (lsb_bytes.size() > 19) {
-            const char nai_magic[] = "stealth_pngcomp";
-            if (memcmp(lsb_bytes.data(), nai_magic, 15) == 0) {
-                // データ長
-                uint32_t datalen = (lsb_bytes[15] << 24) | (lsb_bytes[16] << 16) | (lsb_bytes[17] << 8) | lsb_bytes[18];
-                if (lsb_bytes.size() >= 19 + datalen) {
-                    const uint8_t* comp_data = lsb_bytes.data() + 19;
-                    // gzip展開処理
-                    z_stream strm = {};
-                    strm.next_in = (Bytef*)comp_data;
-                    strm.avail_in = datalen;
-                    std::vector<uint8_t> jsonbuf(datalen * 8);
-                    strm.next_out = jsonbuf.data();
-                    strm.avail_out = static_cast<uInt>(jsonbuf.size());
-
-                    int ret = inflateInit2(&strm, 16 + MAX_WBITS); // gzip対応
-                    if (ret == Z_OK) {
-                        ret = inflate(&strm, Z_FINISH);
-                        if (ret == Z_STREAM_END) {
-                            std::string json_str((char*)jsonbuf.data(), strm.total_out);
-                            std::wstring wjson = utf8_to_unicode(json_str);
-                            result.push_back({L"stealth_pngcomp", wjson});
-                        } else {
-                            result.push_back({L"stealth_pngcomp", L"(gzip展開失敗)"});
-                        }
-                        inflateEnd(&strm);
-                    } else {
-                        result.push_back({L"stealth_pngcomp", L"(inflateInit2失敗)"});
-                    }
-                } else {
-                    result.push_back({L"stealth_pngcomp", L"(データ長不足)"});
-                }
-            } else {
-                result.push_back({L"stealth_pngcomp", L"(マジック不一致)"});
-            }
-        } else {
-            result.push_back({L"stealth_pngcomp", L"(データ長不足)"});
-        }
+        ExtractNovelAIData(lsb_bytes, result);
 
 	} catch (const std::exception& e) {
         OutputDebugStringA(e.what());
@@ -118,4 +81,52 @@ info_list NAIExtractor::ExtractNAI(const std::wstring& imagePath) {
 	if (bitmap) delete bitmap;
     GdiplusShutdown(gdiplusToken);
     return result;
+}
+
+void NAIExtractor::ExtractNovelAIData(const std::vector<uint8_t>& lsb_bytes, info_list& result) {
+    std::string nai_magic = "stealth_pngcomp";
+
+	// 最小データ長チェック
+    if (lsb_bytes.size() <= nai_magic.size() + 4) return;
+
+    // マジックナンバーチェック
+    if (memcmp(lsb_bytes.data(), nai_magic.c_str(), nai_magic.size()) != 0) return;
+
+    // データ長取得
+	auto len_data = lsb_bytes.data() + nai_magic.size();
+	uint32_t length = (len_data[0] << 24) | (len_data[1] << 16) | (len_data[2] << 8) | len_data[3];
+    if (lsb_bytes.size() < nai_magic.size() + 4 + length) {
+		result.push_back({L"error", L"データ長不足"});
+        return;
+    }
+
+    // gzip展開処理
+    const uint8_t* comp_data = lsb_bytes.data() + nai_magic.size() + 4;
+    auto [key, value] = DecompressGzipData(comp_data, length);
+    result.push_back({key, value});
+}
+
+std::pair<std::wstring, std::wstring> NAIExtractor::DecompressGzipData(const uint8_t* comp_data, uint32_t length) {
+    z_stream strm = {};
+    strm.next_in = (Bytef*)comp_data;
+    strm.avail_in = length;
+    std::vector<uint8_t> jsonbuf(length * 8);
+    strm.next_out = jsonbuf.data();
+    strm.avail_out = static_cast<uInt>(jsonbuf.size());
+
+    int ret = inflateInit2(&strm, 16 + MAX_WBITS); // gzip対応
+    if (ret != Z_OK) {
+        inflateEnd(&strm);
+        return {L"error", L"inflateInit2失敗"};
+    }
+
+    ret = inflate(&strm, Z_FINISH);
+    inflateEnd(&strm);
+
+    if (ret != Z_STREAM_END) {
+        return {L"error", L"gzip展開失敗"};
+    }
+
+    std::string json_str((char*)jsonbuf.data(), strm.total_out);
+    return {L"data", utf8_to_unicode(json_str)};
 }

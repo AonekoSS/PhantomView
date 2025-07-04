@@ -200,7 +200,7 @@ bool PhantomView::InspectImage(const std::wstring& path) {
 
 	// NovelAI抽出
     auto nai = NAIExtractor::ExtractNAI(path);
-    OutputSection(L"[NovelAI alpha]", nai);
+    OutputSection(L"[NovelAI stealth data]", nai);
 
     return true;
 }

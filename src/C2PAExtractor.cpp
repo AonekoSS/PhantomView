@@ -19,11 +19,7 @@ info_list C2PAExtractor::ExtractC2PA(const std::wstring& imagePath) {
         if (!manifest_json.empty()) {
             result.push_back({L"C2PA_JSON", utf8_to_unicode(manifest_json)});
         }
-    } catch (const c2pa::C2paException& e) {
-		OutputDebugStringA(e.what());
-    } catch (const std::exception& e) {
-		OutputDebugStringA(e.what());
-    }
-
+	} catch (...) {
+	}
     return result;
 }
