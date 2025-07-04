@@ -58,7 +58,7 @@
       <PreprocessorDefinitions>_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>..\external\c2pa\include;..\external\c2pa-c\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\external\zlib\include;..\external\c2pa\include;..\external\c2pa-c\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -75,7 +75,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>..\external\c2pa\include;..\external\c2pa-c\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\external\zlib\include;..\external\c2pa\include;..\external\c2pa-c\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -110,6 +110,7 @@
   </ItemGroup>
   <ItemGroup>
     <Library Include="..\external\c2pa\lib\c2pa_c.dll.lib" />
+    <Library Include="..\external\zlib\lib\zlib.lib" />
   </ItemGroup>
   <ItemGroup>
     <CopyFileToFolders Include="..\external\c2pa\lib\c2pa_c.dll">
