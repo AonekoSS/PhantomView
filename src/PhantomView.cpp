@@ -6,6 +6,7 @@
 #include "PhantomView.h"
 #include "MetaExtractor.h"
 #include "C2PAExtractor.h"
+#include "NAIExtractor.h"
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -190,6 +191,10 @@ bool PhantomView::InspectImage(const std::wstring& path) {
 	// C2PA抽出
     auto c2pa = C2PAExtractor::ExtractC2PA(path);
     OutputSection(L"[C2PA]", c2pa);
+
+	// NovelAI抽出
+    auto nai = NAIExtractor::ExtractNAI(path);
+    OutputSection(L"[NovelAI alpha]", nai);
 
     return true;
 }

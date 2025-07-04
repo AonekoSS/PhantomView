@@ -55,7 +55,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>..\external\c2pa\include;..\external\c2pa-c\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
@@ -73,7 +73,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>..\external\c2pa\include;..\external\c2pa-c\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
@@ -96,6 +96,7 @@
     <ClCompile Include="..\external\c2pa-c\src\c2pa.cpp" />
     <ClCompile Include="C2PAExtractor.cpp" />
     <ClCompile Include="MetaExtractor.cpp" />
+    <ClCompile Include="NAIExtractor.cpp" />
     <ClCompile Include="PhantomView.cpp" />
     <ClCompile Include="TextUtils.cpp" />
   </ItemGroup>
