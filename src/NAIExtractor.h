@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "InfoList.h"
-#include <string>
 
 class NAIExtractor {
 public:

@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "InfoList.h"
-#include <string>
 
 class C2PAExtractor {
 public:

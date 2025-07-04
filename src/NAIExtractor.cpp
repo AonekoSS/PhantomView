@@ -1,8 +1,4 @@
 ﻿#include "framework.h"
-#include <windows.h>
-#include <objidl.h>
-#include <gdiplus.h>
-#pragma comment(lib, "gdiplus.lib")
 #include <zlib.h>
 
 #include "NAIExtractor.h"
@@ -89,7 +85,7 @@ info_list NAIExtractor::ExtractNAI(const std::wstring& imagePath) {
                     strm.avail_in = datalen;
                     std::vector<uint8_t> jsonbuf(datalen * 8);
                     strm.next_out = jsonbuf.data();
-                    strm.avail_out = jsonbuf.size();
+                    strm.avail_out = static_cast<uInt>(jsonbuf.size());
 
                     int ret = inflateInit2(&strm, 16 + MAX_WBITS); // gzip対応
                     if (ret == Z_OK) {

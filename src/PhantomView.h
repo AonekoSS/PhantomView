@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include <string>
-#include <map>
+
 
 #include "resource.h"
 #include "InfoList.h"

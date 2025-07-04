@@ -2,7 +2,6 @@
 #include "C2PAExtractor.h"
 #include "TextUtils.h"
 #include <c2pa.hpp>
-#include <iostream>
 
 info_list C2PAExtractor::ExtractC2PA(const std::wstring& imagePath) {
     info_list result;
