@@ -134,13 +134,19 @@ void PhantomView::OnDropFiles(HWND hwnd, WPARAM wParam) {
 }
 
 bool PhantomView::IsJson(const std::wstring& text) {
-    // 先頭と末尾の文字だけで簡易判定
     size_t start = text.find_first_not_of(L" \t\r\n");
     size_t end = text.find_last_not_of(L" \t\r\n");
     if (start == std::wstring::npos || end == std::wstring::npos) return false;
     wchar_t first = text[start];
     wchar_t last = text[end];
-    return (first == L'{' && last == L'}') || (first == L'[' && last == L']');
+    if ((first == L'{' && last == L'}') || (first == L'[' && last == L']')) {
+        // コロンとダブルクォートが複数含まれていればJSONとみなす
+        size_t colon = text.find(L':', start);
+        size_t quote1 = text.find(L'\"', start);
+        size_t quote2 = text.find(L'\"', quote1 + 1);
+        if (colon != std::wstring::npos && quote1 != std::wstring::npos && quote2 != std::wstring::npos) return true;
+    }
+    return false;
 }
 
 bool PhantomView::IsXml(const std::wstring& text) {
@@ -214,12 +220,34 @@ void PhantomView::PutText(const std::wstring& text) {
     SendMessageW(m_hbox, EM_REPLACESEL, FALSE, (LPARAM)text.c_str());
 }
 
+// 追加: エスケープされたJSON文字列をアンエスケープする関数
+std::wstring UnescapeJsonString(const std::wstring& s) {
+    std::wstring result;
+    for (size_t i = 0; i < s.size(); ++i) {
+        if (s[i] == L'\\' && i + 1 < s.size()) {
+            if (s[i+1] == L'"') {
+                result += L'"';
+                ++i;
+            } else if (s[i+1] == L'\\') {
+                result += L'\\';
+                ++i;
+            } else {
+                result += s[i];
+            }
+        } else {
+            result += s[i];
+        }
+    }
+    return result;
+}
+
 // JSON整形＆色分け出力
 void PhantomView::OutputAsJSON(const std::wstring& json) {
     int indent = 0;
     bool inString = false;
     bool isKey = true;
-    std::wstring keyBuffer, valBuffer;
+    std::wstring stringValueBuffer;
+    bool capturingStringValue = false;
     for (size_t i = 0; i < json.size(); ++i) {
         wchar_t c = json[i];
         // 空配列・空オブジェクトの特別処理
@@ -235,17 +263,60 @@ void PhantomView::OutputAsJSON(const std::wstring& json) {
             }
         }
         if (c == L'"') {
-            inString = !inString;
-            if (inString) {
-                // 文字列開始
-                if (isKey) SetColor(COLOR_ATTR);
-                else SetColor(COLOR_VALUE);
-                PutText(L"\"");
-            } else {
-                PutText(L"\"");
-                SetColor(COLOR_SYMBOL);
+            // 直前のバックスラッシュの数を数える
+            size_t backslashCount = 0;
+            size_t k = i;
+            while (k > 0 && json[k-1] == L'\\') {
+                backslashCount++;
+                k--;
             }
-            continue;
+            if (backslashCount % 2 == 0) { // エスケープされていないクォート
+                inString = !inString;
+                if (inString) {
+                    // 文字列開始
+                    if (isKey) SetColor(COLOR_ATTR);
+                    else SetColor(COLOR_VALUE);
+                    PutText(L"\"");
+                    if (!isKey) {
+                        stringValueBuffer.clear();
+                        capturingStringValue = true;
+                    }
+                } else {
+                    // 文字列終了
+                    if (!isKey && capturingStringValue) {
+                        // 文字列値のバッファをチェック
+                        std::wstring unescaped = UnescapeJsonString(stringValueBuffer);
+                        if (IsJson(unescaped)) {
+                            PutText(L"\""); // 閉じクォート
+                            SetColor(COLOR_SYMBOL);
+                            PutText(L"\r\n" + std::wstring((indent+1) * INDENT_WIDTH, L' '));
+                            // 再帰的に整形出力
+                            OutputAsJSON(unescaped);
+                            PutText(L"\r\n" + std::wstring(indent * INDENT_WIDTH, L' '));
+                            SetColor(COLOR_VALUE);
+                        } else {
+                            PutText(stringValueBuffer + L"\"");
+                        }
+                        capturingStringValue = false;
+                    } else {
+                        PutText(L"\"");
+                    }
+                    SetColor(COLOR_SYMBOL);
+                }
+                continue;
+            } else {
+                // エスケープされたクォート
+                if (inString) {
+                    if (!isKey && capturingStringValue) {
+                        stringValueBuffer += c;
+                    } else {
+                        PutText(std::wstring(1, c));
+                    }
+                } else {
+                    PutText(std::wstring(1, c));
+                }
+                continue;
+            }
         }
         if (!inString) {
             if (c == L'{' || c == L'[') {
@@ -278,7 +349,11 @@ void PhantomView::OutputAsJSON(const std::wstring& json) {
         }
         // 文字列本体
         if (inString) {
-            PutText(std::wstring(1, c));
+            if (!isKey && capturingStringValue) {
+                stringValueBuffer += c;
+            } else {
+                PutText(std::wstring(1, c));
+            }
         } else if (!iswspace(c)) {
             // 数値やtrue/false/null
             SetColor(COLOR_VALUE);
