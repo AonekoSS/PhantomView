@@ -1,0 +1,9 @@
+
+.vscode/
+.vs/
+obj/
+bin/
+
+*.obj
+*.pch
+*.log
